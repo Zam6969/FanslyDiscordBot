@@ -1,6 +1,14 @@
 # FanslyDiscordBot
 
 
+
+
+
+
+This bot is only for if you go live on fansly and will notify the specified discord server with a specified message. 
+
+
+
 Installation: 
 Step 1: Install Python                         
 Step 2: Requirements.txt (pip install -r requirements.txt)
