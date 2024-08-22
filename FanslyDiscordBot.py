@@ -48,6 +48,7 @@ intents.guilds = True  # Enable guilds intent
 
 # Set up the bot
 bot = commands.Bot(command_prefix='!', intents=intents)
+
 @bot.event
 async def on_disconnect():
     logger.warning("Bot disconnected from Discord")
@@ -59,7 +60,7 @@ async def on_resumed():
 @bot.event
 async def on_error(event, *args, **kwargs):
     logger.error(f"An error occurred in event {event}: {args}, {kwargs}")
-    
+
 @bot.event
 async def on_ready():
     logger.info(f'Logged in as {bot.user}')
@@ -114,7 +115,11 @@ async def check_fansly():
 
         chrome_options = Options()
         chrome_options.add_argument("--headless")  # Run in headless mode (no browser window)
+        chrome_options.add_argument("--no-sandbox")  # Disable the sandboxing feature
+        chrome_options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
+        chrome_options.add_argument("--remote-debugging-port=9222")  # Set a remote debugging port
 
+        driver = None
         try:
             driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
             driver.implicitly_wait(5)  # Short implicit wait
@@ -129,6 +134,7 @@ async def check_fansly():
                 )
                 age_gate_button = driver.find_element(By.XPATH, "/html/body/app-root/div/div[3]/app-age-gate-modal/div/div/div[4]/div/div[2]")
                 age_gate_button.click()
+                logger.info("Bypassed Age gate Lmao!")
             except NoSuchElementException:
                 logger.info("Age gate button not found or already closed.")
 
@@ -142,14 +148,18 @@ async def check_fansly():
                     await send_online_notification(guild_id, channel_id, notification_message)
             except TimeoutException:
                 logger.info("No Video Found Creator Offline")
+                logger.info("Waiting 120Sec..")
                 if settings.get("notification_message_id") is not None:
                     await delete_notification_message(guild_id, channel_id)
+            except Exception as e:
+                logger.error(f"An unexpected error occurred: {e}")
 
         except Exception as e:
             logger.error(f"Error during Fansly check for server {guild_id}: {e}")
 
         finally:
-            driver.quit()
+            if driver:
+                driver.quit()
 
 async def send_online_notification(guild_id, channel_id, message):
     channel = bot.get_channel(channel_id)
